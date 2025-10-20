@@ -1,0 +1,18 @@
+random_crop: true
+random_horizontal_flip: true
+random_rotation: false
+color_jitter: true
+gaussian_blur: false
+
+# Augmentation parameters
+flip_prob: 0.5
+rotation_degrees: 10
+brightness: 0.2
+contrast: 0.2
+saturation: 0.2
+hue: 0.1
+blur_kernel_size: 3
+
+# Normalization (ImageNet defaults)
+normalize_mean: [0.485, 0.456, 0.406]
+normalize_std: [0.229, 0.224, 0.225]

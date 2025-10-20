@@ -1,0 +1,16 @@
+defaults:
+  - data: core50
+  - augmentation: standard
+  - dataloader: default
+  - experiment: baseline
+  - _self_
+
+name: ${experiment.name}
+seed: 42
+
+# Hydra configuration
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: true

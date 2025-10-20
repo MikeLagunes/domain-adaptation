@@ -1,0 +1,18 @@
+random_crop: false
+random_horizontal_flip: true
+random_rotation: false
+color_jitter: false
+gaussian_blur: false
+
+# Augmentation parameters
+flip_prob: 0.3
+rotation_degrees: 5
+brightness: 0.1
+contrast: 0.1
+saturation: 0.1
+hue: 0.05
+blur_kernel_size: 3
+
+# Normalization
+normalize_mean: [0.485, 0.456, 0.406]
+normalize_std: [0.229, 0.224, 0.225]

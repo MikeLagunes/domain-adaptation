@@ -1,0 +1,23 @@
+name: core50_baseline
+description: "Standard CORe50 baseline experiment"
+
+# Model configuration (can be expanded)
+model:
+  name: resnet18
+  pretrained: true
+  num_classes: 50
+
+# Training configuration
+training:
+  epochs: 100
+  learning_rate: 0.001
+  weight_decay: 1e-4
+  scheduler:
+    name: cosine
+    min_lr: 1e-6
+
+# Optimization
+optimizer:
+  name: adam
+  lr:  0.001
+  weight_decay:  1e-4
