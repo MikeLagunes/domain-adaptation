@@ -3,13 +3,13 @@ description: "Standard CORe50 baseline experiment"
 
 # Model configuration (can be expanded)
 model:
-  name: resnet18
+  name: maxvit #resnet18
   pretrained: true
   num_classes: 50
 
 # Training configuration
 training:
-  epochs: 100
+  epochs: 10
   learning_rate: 0.001
   weight_decay: 1e-4
   scheduler:

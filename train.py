@@ -35,6 +35,10 @@ def create_model(cfg: DictConfig):
         from torchvision.models import resnet50
         model = resnet50(pretrained=cfg.experiment.model.pretrained)
         model.fc = nn.Linear(model.fc.in_features, cfg.experiment.model.num_classes)
+    elif cfg.experiment.model.name == "maxvit":
+        from torchvision.models import maxvit_t
+        model = maxvit_t(pretrained=cfg.experiment.model.pretrained)
+        model.classifier[5] = nn.Linear(model.classifier[5].in_features, cfg.experiment.model.num_classes)
     else:
         raise ValueError(f"Unknown model: {cfg.experiment.model.name}")
     
