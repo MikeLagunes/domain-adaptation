@@ -757,16 +757,15 @@ def _maxvit(
     # transformer parameters
     head_dim: int,
     # Weights API
-    weights: Optional[WeightsEnum] = None,
-    progress: bool = False,
+    weights: Optional[str] = None,
     # kwargs,
     **kwargs: Any,
 ) -> MaxVit:
 
-    if weights is not None:
-        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
-        assert weights.meta["min_size"][0] == weights.meta["min_size"][1]
-        _ovewrite_named_param(kwargs, "input_size", weights.meta["min_size"])
+    # if weights is not None:
+    #     _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
+    #     assert weights.meta["min_size"][0] == weights.meta["min_size"][1]
+    #     _ovewrite_named_param(kwargs, "input_size", weights.meta["min_size"])
 
     input_size = kwargs.pop("input_size", (224, 224))
 
@@ -782,7 +781,7 @@ def _maxvit(
     )
 
     if weights is not None:
-        model.load_state_dict(weights.get_state_dict(progress=progress, check_hash=True))
+        model.load_state_dict(torch.load(weights, weights_only=True))
 
     return model
 
@@ -815,8 +814,8 @@ class MaxVit_T_Weights(WeightsEnum):
 
 
 @register_model()
-@handle_legacy_interface(weights=("pretrained", MaxVit_T_Weights.IMAGENET1K_V1))
-def maxvit_t(*, weights: Optional[MaxVit_T_Weights] = None, progress: bool = True, **kwargs: Any) -> MaxVit:
+# @handle_legacy_interface(weights=("pretrained", MaxVit_T_Weights.IMAGENET1K_V1))
+def maxvit_t(*, weights: str = None, progress: bool = True, **kwargs: Any) -> MaxVit:
     """
     Constructs a maxvit_t architecture from
     `MaxViT: Multi-Axis Vision Transformer <https://arxiv.org/abs/2204.01697>`_.
@@ -837,7 +836,6 @@ def maxvit_t(*, weights: Optional[MaxVit_T_Weights] = None, progress: bool = Tru
     .. autoclass:: torchvision.models.MaxVit_T_Weights
         :members:
     """
-    weights = MaxVit_T_Weights.verify(weights)
 
     return _maxvit(
         stem_channels=64,
@@ -847,6 +845,6 @@ def maxvit_t(*, weights: Optional[MaxVit_T_Weights] = None, progress: bool = Tru
         stochastic_depth_prob=0.2,
         partition_size=7,
         weights=weights,
-        progress=progress,
+      #  progress=progress,
         **kwargs,
     )
