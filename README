@@ -2,3 +2,55 @@
 
 1. Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 2. Install dependencies: `uv sync`
+
+
+# Models Package
+
+This directory contains modified torchvision models for domain adaptation research.
+
+## Structure
+So far it contains a collection of convnets and transformer models for image classification. 
+
+
+- `maxvit.py` - MaxViT (Multi-Axis Vision Transformer) implementation
+- `resnet.py` - ResNet and variants (ResNeXt, Wide ResNet) implementation
+- `convnext.py` - ConvNeXt implementation
+- `torchvision_utils.py` - Minimal utilities extracted from torchvision internals
+- `TORCHVISION_LICENSE` - BSD 3-Clause license for borrowed code
+
+## Usage
+
+```python
+from models import resnet50, convnext_tiny, maxvit_t
+
+# Create models without pretrained weights (for modification)
+model1 = resnet50(weights=None)
+model2 = convnext_tiny(weights=None)
+model3 = maxvit_t(weights=None)
+
+# Or use pretrained weights
+from models import ResNet50_Weights, ConvNeXt_Tiny_Weights, MaxVit_T_Weights
+
+model1 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+model2 = convnext_tiny(weights=ConvNeXt_Tiny_Weights.IMAGENET1K_V1)
+model3 = maxvit_t(weights=MaxVit_T_Weights.IMAGENET1K_V1)
+```
+
+## Why Copy Instead of Import?
+
+These files were copied from torchvision to:
+1. Enable modifications for domain adaptation research
+2. Avoid dependency on torchvision internal APIs (which can change)
+3. Keep custom modifications version-controlled with your project
+4. Allow architectural changes without monkey-patching
+
+## Attribution
+
+All models are adapted from [PyTorch Vision](https://github.com/pytorch/vision).
+- License: BSD 3-Clause
+- Copyright: Soumith Chintala 2016
+
+
+## Modifying Models
+
+Feel free to modify these files for your research. The attribution headers and license file ensure proper credit to the original authors while allowing you to make changes.
