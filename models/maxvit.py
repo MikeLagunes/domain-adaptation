@@ -727,8 +727,10 @@ class MaxVit(nn.Module):
         x = self.stem(x)
         for block in self.blocks:
             x = block(x)
+
+        x_features = x
         x = self.classifier(x)
-        return x
+        return x, x_features
 
     def _init_weights(self):
         for m in self.modules():

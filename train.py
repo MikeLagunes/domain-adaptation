@@ -101,7 +101,7 @@ def train_epoch(model, dataloader, criterion, optimizer, device, epoch):
         images, targets = images.to(device), targets.to(device)
         
         optimizer.zero_grad()
-        outputs = model(images)
+        outputs, feats_last_layer = model(images)
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
