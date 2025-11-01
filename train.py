@@ -38,7 +38,7 @@ def create_model(cfg: DictConfig):
     elif cfg.experiment.model.name == "maxvit":
         from models import maxvit_t
         # TODO (mike): Add config option for weights path
-        model = maxvit_t(weights="/path/to/maxvit_t-bc5ab103.pth")
+        model = maxvit_t(weights="/home/titan-churro/.cache/torch/hub/checkpoints/maxvit_t-bc5ab103.pth")
         model.classifier[5] = nn.Linear(model.classifier[5].in_features, cfg.experiment.model.num_classes)
     else:
         raise ValueError(f"Unknown model: {cfg.experiment.model.name}")
@@ -97,19 +97,20 @@ def train_epoch(model, dataloader, criterion, optimizer, device, epoch):
     total = 0
     
     pbar = tqdm(dataloader, desc=f"Epoch {epoch}")
-    for batch_idx, (images, targets) in enumerate(pbar):
-        images, targets = images.to(device), targets.to(device)
+    for batch_idx, (images, class_targets, domain_targets) in enumerate(pbar):
+        images, class_targets = images.to(device), class_targets.to(device)
         
         optimizer.zero_grad()
         outputs, feats_last_layer = model(images)
-        loss = criterion(outputs, targets)
+
+        loss = criterion(outputs, class_targets)
         loss.backward()
         optimizer.step()
         
         running_loss += loss.item()
         _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
+        total += class_targets.size(0)
+        correct += predicted.eq(class_targets).sum().item()
         
         # Update progress bar
         pbar.set_postfix({
@@ -131,15 +132,15 @@ def validate(model, dataloader, criterion, device, split_name="Val"):
     total = 0
     
     with torch.no_grad():
-        for images, targets in tqdm(dataloader, desc=f"{split_name}"):
-            images, targets = images.to(device), targets.to(device)
-            outputs = model(images)
-            loss = criterion(outputs, targets)
+        for images, class_targets in tqdm(dataloader, desc=f"{split_name}"):
+            images, class_targets = images.to(device), class_targets.to(device)
+            outputs, feats = model(images)
+            loss = criterion(outputs, class_targets)
             
             running_loss += loss.item()
             _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+            total += class_targets.size(0)
+            correct += predicted.eq(class_targets).sum().item()
     
     epoch_loss = running_loss / len(dataloader)
     epoch_acc = 100. * correct / total

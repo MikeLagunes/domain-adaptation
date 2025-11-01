@@ -95,7 +95,7 @@ class CORe50Dataset(Dataset):
         """Return the total number of samples"""
         return len(self.samples)
     
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, int]:
         """
         Get a sample from the dataset
         
@@ -115,7 +115,7 @@ class CORe50Dataset(Dataset):
         if self.transform:
             image = self.transform(image)
         
-        return image, sample['class_idx']
+        return image, sample['class_idx'], sample['session']
     
     def get_sample_info(self, idx: int) -> Dict:
         """
