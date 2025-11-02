@@ -74,7 +74,7 @@ class CORe50Dataset(Dataset):
                         'path': img_file,
                         'class_name': class_name,
                         'class_idx': self.class_to_idx[class_name],
-                        'session': session,
+                        'session': session - 1,
                         'object': obj
                     })
         
