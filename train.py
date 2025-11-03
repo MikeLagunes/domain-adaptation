@@ -9,6 +9,7 @@ from omegaconf import DictConfig, OmegaConf
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 import logging
 from pathlib import Path
@@ -16,6 +17,7 @@ from tqdm import tqdm
 import wandb
 import json
 from datetime import datetime
+import numpy as np
 
 # Import our modules
 from core50_dataset import CORe50Dataset
@@ -95,15 +97,24 @@ def train_epoch(model, dataloader, criterion, optimizer, device, epoch):
     running_loss = 0.0
     correct = 0
     total = 0
+
+    # Calculate lambda for GRL
+    # TODO (mike): grab total epochs from config
+    p = epoch / 10  # Assuming total epochs is 10 for lambda calculation
+    lambda_val = 2 / (1 + np.exp(-10 * p)) - 1  # Gradually increase
     
-    pbar = tqdm(dataloader, desc=f"Epoch {epoch}")
+    pbar = tqdm(dataloader, desc=f"Epoch {epoch} | lambda: {lambda_val:.4f}")
     for batch_idx, (images, class_targets, domain_targets) in enumerate(pbar):
-        images, class_targets = images.to(device), class_targets.to(device)
+        images, class_targets, domain_targets = images.to(device), class_targets.to(device), domain_targets.to(device)
         
         optimizer.zero_grad()
-        outputs, feats_last_layer = model(images)
+        outputs, outputs_domain = model(images, lambda_val=lambda_val)
 
-        loss = criterion(outputs, class_targets)
+        loss_1 = criterion(outputs, class_targets) 
+        loss_2 = criterion(outputs_domain, domain_targets) 
+        
+        loss = loss_1 + loss_2
+
         loss.backward()
         optimizer.step()
         
@@ -132,11 +143,13 @@ def validate(model, dataloader, criterion, device, split_name="Val"):
     total = 0
     
     with torch.no_grad():
-        for images, class_targets in tqdm(dataloader, desc=f"{split_name}"):
-            images, class_targets = images.to(device), class_targets.to(device)
-            outputs, feats = model(images)
-            loss = criterion(outputs, class_targets)
-            
+        for images, class_targets, domain_targets in tqdm(dataloader, desc=f"{split_name}"):
+            images, class_targets, domain_targets = images.to(device), class_targets.to(device), domain_targets.to(device)
+            outputs, outputs_domain = model(images, lambda_val=0.0)
+            loss_class = criterion(outputs, class_targets)
+            loss_domain = criterion(outputs_domain, domain_targets)
+            loss = loss_class + loss_domain
+
             running_loss += loss.item()
             _, predicted = outputs.max(1)
             total += class_targets.size(0)

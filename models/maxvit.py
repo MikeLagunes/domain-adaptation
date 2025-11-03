@@ -32,6 +32,7 @@ from .torchvision_utils import (
     ImageClassification,
     InterpolationMode,
     _log_api_usage_once,
+    GradientReversalLayer,
 )
 
 __all__ = [
@@ -721,16 +722,37 @@ class MaxVit(nn.Module):
             nn.Linear(block_channels[-1], num_classes, bias=False),
         )
 
+        # Domain classifier (simple MLP)
+        self.domain_classifier = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(),
+            nn.LayerNorm(block_channels[-1]),
+            nn.Linear(block_channels[-1], block_channels[-1]),
+            nn.ReLU(),
+            nn.Linear(block_channels[-1], 11, bias=False)
+        )
+
+        self.gradient_reversal = GradientReversalLayer()
+
         self._init_weights()
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, lambda_val: float) -> Tensor:
         x = self.stem(x)
         for block in self.blocks:
             x = block(x)
 
-        x_features = x
+        # Domain classification branch with gradient reversal
+        #print("Feature shape before GRL:", x.shape, x.mean().item())
+        reversed_features = self.gradient_reversal.apply(x, lambda_val)
+        #print("Feature shape after GRL:", reversed_features.shape, reversed_features.mean().item())
+        
+        domain_pred = self.domain_classifier(reversed_features)  # Global pooling
+
+        #print("Domain prediction shape:", domain_pred.shape, domain_pred.mean().item())    
+        #exit(0)
+        # Main classification branch
         x = self.classifier(x)
-        return x, x_features
+        return x, domain_pred
 
     def _init_weights(self):
         for m in self.modules():
@@ -783,7 +805,7 @@ def _maxvit(
     )
 
     if weights is not None:
-        model.load_state_dict(torch.load(weights, weights_only=True))
+        model.load_state_dict(torch.load(weights, weights_only=True), strict=False)
 
     return model
 

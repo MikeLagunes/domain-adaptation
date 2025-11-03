@@ -1,5 +1,5 @@
 defaults:
-  - data: core50
+  - data: few_shot
   - augmentation: standard
   - dataloader: default
   - experiment: baseline

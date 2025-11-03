@@ -1,4 +1,4 @@
-name: features_free_leaf
+name: gradient_reversal_lambda_experiment
 description: "Standard CORe50 baseline experiment"
 
 # Model configuration (can be expanded)
