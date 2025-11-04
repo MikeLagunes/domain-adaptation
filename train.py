@@ -90,19 +90,46 @@ def create_scheduler(optimizer, cfg: DictConfig):
     
     return scheduler
 
+def check_domain_confusion(model, data_loader, epoch, lambda_val):
+    model.eval()
+    domain_predictions = []
+    true_domains = []
+    
+    with torch.no_grad():
+        # Source samples
+        for imgs, _ in data_loader:
+            features = model.feature_extractor(imgs)
+            domain_logits = model.domain_classifier(features)
+            domain_predictions.extend(domain_logits.argmax(1).cpu().numpy())
+            true_domains.extend([0] * len(imgs))
+            if len(domain_predictions) > 200:
+                break
+                
+    accuracy = np.mean(np.array(domain_predictions) == np.array(true_domains))
+    
+    print(f"Epoch {epoch} (λ={lambda_val:.3f}): Domain Acc = {accuracy:.3f}")
+    
+    # Interpretation
+    if accuracy > 0.8 and lambda_val > 0.5:
+        print("  ⚠️ PROBLEM: Domain classifier too accurate despite GRL!")
+        print("  → Try: Stronger lambda, weaker domain classifier, or check GRL implementation")
+    elif accuracy < 0.55 and epoch < 10:
+        print("  ⚠️ PROBLEM: Domain classifier not learning initially!")
+        print("  → Try: Delay GRL start, reduce initial lambda")
+    elif 0.45 < accuracy < 0.55 and lambda_val > 0.5:
+        print("  ✓ GOOD: Domain confusion achieved!")
+    
+    return accuracy
 
-def train_epoch(model, dataloader, criterion, optimizer, device, epoch):
+
+def train_epoch(model, dataloader, criterion, optimizer, device, epoch, lambda_val=0.0):
     """Train for one epoch"""
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
 
-    # Calculate lambda for GRL
-    # TODO (mike): grab total epochs from config
-    p = epoch / 10  # Assuming total epochs is 10 for lambda calculation
-    lambda_val = 2 / (1 + np.exp(-10 * p)) - 1  # Gradually increase
-    
+
     pbar = tqdm(dataloader, desc=f"Epoch {epoch} | lambda: {lambda_val:.4f}")
     for batch_idx, (images, class_targets, domain_targets) in enumerate(pbar):
         images, class_targets, domain_targets = images.to(device), class_targets.to(device), domain_targets.to(device)
@@ -214,12 +241,19 @@ def train(cfg: DictConfig) -> None:
     
     for epoch in range(1, cfg.experiment.training.epochs + 1):
         log.info(f"\nEpoch {epoch}/{cfg.experiment.training.epochs}")
-        
+
+        # Calculate lambda for GRL
+        # TODO (mike): grab total epochs from config, and do a grid search later
+        p = epoch / 1000  # Assuming total epochs is 10 for lambda calculation
+        lambda_val = 2 / (1 + np.exp(-5 * p)) - 1  # Gradually increase
+    
         # Train
-        train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device, epoch)
+        train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device, epoch, lambda_val)
         
         # Validate
         val_loss, val_acc = validate(model, val_loader, criterion, device, "Val")
+
+        domain_acc = check_domain_confusion(model, val_loader, epoch, lambda_val=lambda_val)
         
         # Update scheduler
         if scheduler:
