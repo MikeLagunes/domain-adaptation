@@ -736,7 +736,7 @@ class MaxVit(nn.Module):
 
         self._init_weights()
 
-    def forward(self, x: Tensor, lambda_val: float) -> Tensor:
+    def forward(self, x: Tensor, lambda_val: float = 0.0) -> Tensor:
         x = self.stem(x)
         for block in self.blocks:
             x = block(x)

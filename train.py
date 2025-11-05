@@ -97,11 +97,10 @@ def check_domain_confusion(model, data_loader, epoch, lambda_val):
     
     with torch.no_grad():
         # Source samples
-        for imgs, _ in data_loader:
-            features = model.feature_extractor(imgs)
-            domain_logits = model.domain_classifier(features)
+        for imgs, _, domain_targets in data_loader:
+            _, domain_logits = model(imgs)
             domain_predictions.extend(domain_logits.argmax(1).cpu().numpy())
-            true_domains.extend([0] * len(imgs))
+            true_domains.extend(domain_targets.cpu().numpy())
             if len(domain_predictions) > 200:
                 break
                 
