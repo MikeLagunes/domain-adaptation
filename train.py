@@ -90,15 +90,17 @@ def create_scheduler(optimizer, cfg: DictConfig):
     
     return scheduler
 
-def check_domain_confusion(model, data_loader, epoch, lambda_val):
+def check_domain_confusion(model, data_loader, epoch, lambda_val, device):
     model.eval()
     domain_predictions = []
     true_domains = []
     
     with torch.no_grad():
         # Source samples
-        for imgs, _, domain_targets in data_loader:
-            _, domain_logits = model(imgs)
+        for images, _, domain_targets in data_loader:
+            images, domain_targets = images.to(device), domain_targets.to(device)
+
+            _, domain_logits = model(images, lambda_val=lambda_val)
             domain_predictions.extend(domain_logits.argmax(1).cpu().numpy())
             true_domains.extend(domain_targets.cpu().numpy())
             if len(domain_predictions) > 200:
@@ -107,6 +109,7 @@ def check_domain_confusion(model, data_loader, epoch, lambda_val):
     accuracy = np.mean(np.array(domain_predictions) == np.array(true_domains))
     
     print(f"Epoch {epoch} (λ={lambda_val:.3f}): Domain Acc = {accuracy:.3f}")
+    print(domain_predictions)
     
     # Interpretation
     if accuracy > 0.8 and lambda_val > 0.5:
@@ -128,6 +131,9 @@ def train_epoch(model, dataloader, criterion, optimizer, device, epoch, lambda_v
     correct = 0
     total = 0
 
+    total_domain = 0
+    correct_domain = 0
+
 
     pbar = tqdm(dataloader, desc=f"Epoch {epoch} | lambda: {lambda_val:.4f}")
     for batch_idx, (images, class_targets, domain_targets) in enumerate(pbar):
@@ -146,13 +152,19 @@ def train_epoch(model, dataloader, criterion, optimizer, device, epoch, lambda_v
         
         running_loss += loss.item()
         _, predicted = outputs.max(1)
+        _, predicted_domain = outputs_domain.max(1)
+
         total += class_targets.size(0)
         correct += predicted.eq(class_targets).sum().item()
+
+        total_domain += domain_targets.size(0)
+        correct_domain += predicted_domain.eq(domain_targets).sum().item()
         
         # Update progress bar
         pbar.set_postfix({
-            'Loss': f'{running_loss/(batch_idx+1):.4f}',
-            'Acc': f'{100.*correct/total:.2f}%'
+            'L': f'{running_loss/(batch_idx+1):.4f}',
+            'Ac': f'{100.*correct/total:.2f}%',
+            'Ad': f'{100.*correct_domain/total_domain:.2f}%'
         })
     
     epoch_loss = running_loss / len(dataloader)
@@ -244,7 +256,7 @@ def train(cfg: DictConfig) -> None:
         # Calculate lambda for GRL
         # TODO (mike): grab total epochs from config, and do a grid search later
         p = epoch / 1000  # Assuming total epochs is 10 for lambda calculation
-        lambda_val = 2 / (1 + np.exp(-5 * p)) - 1  # Gradually increase
+        lambda_val =  0 #2 / (1 + np.exp(-5 * p)) - 1  # Gradually increase
     
         # Train
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device, epoch, lambda_val)
@@ -252,7 +264,7 @@ def train(cfg: DictConfig) -> None:
         # Validate
         val_loss, val_acc = validate(model, val_loader, criterion, device, "Val")
 
-        domain_acc = check_domain_confusion(model, val_loader, epoch, lambda_val=lambda_val)
+        domain_acc = check_domain_confusion(model, val_loader, epoch, lambda_val=lambda_val, device=device)
         
         # Update scheduler
         if scheduler:
