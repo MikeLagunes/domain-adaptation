@@ -7,6 +7,12 @@ Contains modified versions of models from torchvision and custom implementations
 # MaxVit
 from .maxvit import MaxVit, MaxVit_T_Weights, maxvit_t
 
+# MaxVit with Domain Adaptation
+from .maxvit_da import MaxVitDA, maxvit_t_da
+
+# MaxVit Original (clean reference)
+from .maxvit_orig import MaxVit as MaxVitOrig, maxvit_t as maxvit_t_orig
+
 # ResNet
 from .resnet import (
     ResNet,
@@ -50,6 +56,12 @@ __all__ = [
     "MaxVit",
     "MaxVit_T_Weights",
     "maxvit_t",
+    # MaxVit Domain Adaptation
+    "MaxVitDA",
+    "maxvit_t_da",
+    # MaxVit Original
+    "MaxVitOrig",
+    "maxvit_t_orig",
     # ResNet
     "ResNet",
     "ResNet18_Weights",

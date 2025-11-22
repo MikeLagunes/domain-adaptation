@@ -245,6 +245,6 @@ class GradientReversalLayer(torch.autograd.Function):
         # print(f"Lambda: {lambda_val}, Grad min/max: {grad_output.min()}/{grad_output.max()}")
         
         # Compute reversed gradient
-        grad_input = grad_output.neg() * lambda_val
+        grad_input = grad_output # .neg() * lambda_val
         
         return grad_input, None
