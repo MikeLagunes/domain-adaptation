@@ -12,6 +12,7 @@ training:
   epochs: 10
   learning_rate: 0.001
   weight_decay: 1e-4
+  normalizing_factor: 10  # Lambda schedule normalizing factor for gradient reversal
   scheduler:
     name: cosine
     min_lr: 1e-6

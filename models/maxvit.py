@@ -728,7 +728,7 @@ class MaxVit(nn.Module):
             nn.Flatten(),
             nn.LayerNorm(block_channels[-1]),
             nn.Linear(block_channels[-1], block_channels[-1]),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(block_channels[-1], 11, bias=False)
         )
 

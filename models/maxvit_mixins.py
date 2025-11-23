@@ -48,7 +48,7 @@ class DomainAdaptationMixin:
             nn.Flatten(),
             nn.LayerNorm(block_channels[-1]),
             nn.Linear(block_channels[-1], block_channels[-1]),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(block_channels[-1], num_domains, bias=False)
         )
 
