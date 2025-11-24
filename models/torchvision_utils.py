@@ -227,14 +227,9 @@ def _log_api_usage_once(obj: Any) -> None:
 class GradientReversalLayer(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, lambda_val):
-        # ctx.save_for_backward(x)
         ctx.lambda_val = lambda_val
         return x
-        # Detach and clone to avoid in-place issues
-        # output = x.detach().clone()
-        # output.requires_grad_(True)
-        # return output
-    
+       
     @staticmethod
     def backward(ctx, grad_output):
         # x, = ctx.saved_tensors
@@ -245,6 +240,6 @@ class GradientReversalLayer(torch.autograd.Function):
         # print(f"Lambda: {lambda_val}, Grad min/max: {grad_output.min()}/{grad_output.max()}")
         
         # Compute reversed gradient
-        grad_input = grad_output # .neg() * lambda_val
+        grad_input = grad_output.neg() * lambda_val
         
         return grad_input, None
