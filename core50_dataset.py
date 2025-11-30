@@ -31,6 +31,8 @@ class CORe50Dataset(Dataset):
         objects: Optional[List[int]] = None,
         transform: Optional[Callable] = None
     ):
+        self._domain_bkg = {1:0, 2:0, 3:0, 4:1, 5:0, 6:0, 7:0, 8:0, 9:0, 10:1, 11:1}  # Map session to domain index
+    
         self.root_dir = Path(root_dir)
         self.sessions = sessions
         self.objects = objects if objects is not None else list(range(1, 51))  # o1-o50
@@ -40,7 +42,7 @@ class CORe50Dataset(Dataset):
         self.samples = []
         self.class_to_idx = {}
         self._build_dataset()
-    
+        
     def _build_dataset(self):
         """Build the dataset by scanning the directory structure"""
         class_idx = 0
@@ -74,7 +76,7 @@ class CORe50Dataset(Dataset):
                         'path': img_file,
                         'class_name': class_name,
                         'class_idx': self.class_to_idx[class_name],
-                        'session': session - 1,
+                        'session': self._domain_bkg[session],
                         'object': obj
                     })
         
