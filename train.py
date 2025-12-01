@@ -254,8 +254,8 @@ def train(cfg: DictConfig) -> None:
 
         # Calculate lambda for GRL
         # Lambda schedule: gradually increases from ~0 to ~1 during training
-        p = epoch / cfg.experiment.training.normalizing_factor
-        lambda_val = 2 / (1 + np.exp(-0.5 * (p - 0.5))) - 1  # Gradually increase
+        p = cfg.experiment.training.normalizing_factor  
+        lambda_val = 2 / (1 + np.exp(-0.5 * (epoch - p))) - 1  # Gradually increase
     
         # Train
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device, epoch, lambda_val)
